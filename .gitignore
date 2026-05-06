@@ -1,0 +1,16 @@
+venv/
+__pycache__/
+*.py[cod]
+.pycache_check/
+
+.env
+.DS_Store
+
+reward_model.pt
+ppo_policy.pt
+ppo_value.pt
+checkpoints/
+runs/
+
+.cache/
+data_cache/
