@@ -14,6 +14,8 @@ The code is intentionally direct rather than production-optimized, so it is suit
 ├── config.py                 # Model and training hyperparameters
 ├── train_reward.py           # Stage 1: train reward_model.pt
 ├── train_ppo.py              # Stage 2: train ppo_policy.pt and ppo_value.pt
+├── eval_reward.py            # Reward-model accuracy and reward-gap evaluation
+├── inference.py              # Compare base model and PPO policy outputs
 ├── explore_data.py           # Small dataset/tokenizer exploration script
 ├── data/
 │   └── data_loader.py        # Anthropic HH-RLHF dataset loaders
@@ -80,6 +82,8 @@ This downloads Anthropic HH-RLHF through `datasets`, trains the scalar reward mo
 
 ```text
 reward_model.pt
+runs/<timestamp>_reward/reward_model.pt
+runs/<timestamp>_reward/reward_metrics.csv
 ```
 
 Stage 2 runs PPO:
@@ -100,6 +104,21 @@ It writes:
 ```text
 ppo_policy.pt
 ppo_value.pt
+runs/<timestamp>_ppo/ppo_policy.pt
+runs/<timestamp>_ppo/ppo_value.pt
+runs/<timestamp>_ppo/ppo_metrics.csv
+```
+
+Evaluate the reward model:
+
+```bash
+python eval_reward.py
+```
+
+Compare base-model and PPO-policy generations:
+
+```bash
+python inference.py --prompt "How can I stay productive while studying?"
 ```
 
 ## PPO Step Map

@@ -5,6 +5,7 @@ from models.value_model import ValueModel
 from rlhf.ppo_trainer import ppo_train_step
 from data.data_loader import get_ppo_dataloader
 from config import ModelConfig, PPOConfig
+from utils import append_csv_row, create_run_dir, save_config
 
 def main():
     model_config = ModelConfig()
@@ -12,6 +13,10 @@ def main():
 
     device = 'cuda' if torch.cuda.is_available() else "cpu"
     print(f"Using device: {device}")
+    run_dir = create_run_dir("ppo")
+    save_config(run_dir, model=model_config, ppo=ppo_config)
+    metrics_path = run_dir / "ppo_metrics.csv"
+    print(f"Run directory: {run_dir}")
 
     # tokenizer
     tokenizer = AutoTokenizer.from_pretrained(model_config.model_name)
@@ -85,9 +90,23 @@ def main():
             f"kl = {metrics['kl']:.3f},"
             f"policy_loss = {metrics['policy_loss']:.4f},"
             f"value_loss = {metrics['value_loss']:.4f}")
+            append_csv_row(
+                metrics_path,
+                {
+                    "iteration": iteration,
+                    "reward": metrics["reward_score"],
+                    "kl": metrics["kl"],
+                    "policy_loss": metrics["policy_loss"],
+                    "value_loss": metrics["value_loss"],
+                    "response_len": metrics["response_len"],
+                },
+                ["iteration", "reward", "kl", "policy_loss", "value_loss", "response_len"],
+            )
 
             iteration += 1
 
+    torch.save(policy_model.state_dict(), run_dir / "ppo_policy.pt")
+    torch.save(value_model.state_dict(), run_dir / "ppo_value.pt")
     torch.save(policy_model.state_dict(), "ppo_policy.pt")
     torch.save(value_model.state_dict(), "ppo_value.pt")
     print("PPO training complete. Models saved.")

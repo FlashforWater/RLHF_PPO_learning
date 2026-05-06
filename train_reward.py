@@ -5,6 +5,7 @@ from models.reward_model import RewardModel
 from data.data_loader import get_reward_dataloader
 from rlhf.reward_trainer import train_reward_model, evaluate_reward_model
 from config import ModelConfig, RewardTrainConfig
+from utils import create_run_dir, save_config
 
 
 def main():
@@ -13,6 +14,9 @@ def main():
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Using device: {device}")
+    run_dir = create_run_dir("reward")
+    save_config(run_dir, model=model_config, reward=reward_config)
+    print(f"Run directory: {run_dir}")
 
     # tokenizer — set pad_token explicitly (LLaMA-style tokenizers don't ship one)
     tokenizer = AutoTokenizer.from_pretrained(model_config.model_name)
@@ -42,14 +46,18 @@ def main():
         model, train_loader, optimizer,
         num_epochs=reward_config.num_epochs,
         device=device,
+        metrics_path=run_dir / "reward_metrics.csv",
     )
 
     print("Evaluating on validation set...")
     accuracy = evaluate_reward_model(model, val_loader, device)
     print(f"Validation accuracy: {accuracy:.4f}")
 
-    print("Saving reward model to reward_model.pt ...")
-    torch.save(model.state_dict(), "reward_model.pt")
+    checkpoint_path = run_dir / "reward_model.pt"
+    latest_path = "reward_model.pt"
+    print(f"Saving reward model to {checkpoint_path} ...")
+    torch.save(model.state_dict(), checkpoint_path)
+    torch.save(model.state_dict(), latest_path)
     print("Done.")
 
 

@@ -1,4 +1,5 @@
 import torch
+from utils import append_csv_row
 
 
 def compute_reward_loss(reward_chosen, reward_rejected):
@@ -7,7 +8,7 @@ def compute_reward_loss(reward_chosen, reward_rejected):
     return loss
 
 
-def train_reward_model(model, train_loader, optimizer, num_epochs, device):
+def train_reward_model(model, train_loader, optimizer, num_epochs, device, metrics_path=None):
     model.train()
     for epoch in range(num_epochs):
         total_loss = 0.0
@@ -29,6 +30,16 @@ def train_reward_model(model, train_loader, optimizer, num_epochs, device):
 
             total_loss += loss.item()
             num_batches += 1
+            if metrics_path is not None:
+                append_csv_row(
+                    metrics_path,
+                    {
+                        "epoch": epoch + 1,
+                        "batch": num_batches,
+                        "loss": loss.item(),
+                    },
+                    ["epoch", "batch", "loss"],
+                )
             if num_batches == 1 or num_batches % 5 == 0:
                 print(
                     f"  batch {num_batches}/{len(train_loader)} — loss: {loss.item():.4f}",
